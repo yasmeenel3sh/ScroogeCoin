@@ -27,7 +27,7 @@ class User():
             coinsToSend.append(coins.pop(index))
         paymentCreation=Payment(coinsToSend,self.__id,receiverID)
         paymentCreation.Sign(self.__sk)
-
+        return paymentCreation
 
 
     def getCoins(blockChain):
@@ -39,6 +39,6 @@ class User():
                     if(t.getSenderID()==self.__id):
                         for coin in t.getCoins():
                             coins.remove(coin)
-                    if(t.getReceiverID()==self._id and t.getCoin().getCoinOwner==self.__id):
+                    if(t.getReceiverID()==self._id):
                         coins=coins+t.getCoins()
         return coins                    

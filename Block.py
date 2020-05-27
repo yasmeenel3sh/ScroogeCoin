@@ -1,4 +1,4 @@
-from Hash import hash
+from Hash import Hash, HashPointer
 from Transaction import Transaction, coinCreation, Payment
 from ScroogeCoin import ScroogeCoin
 from ellipticcurve.ecdsa import Ecdsa
@@ -6,7 +6,7 @@ from ellipticcurve.privateKey import PrivateKey
 class Block():
     __id=0
     hash=None
-    def __init__(self,pointer=None,previosHash=None):
+    def __init__(self,pointer,previosHash):
         #max ten transactions
         self.__transactions=[]
         self.hashPointer=HashPointer(pointer,previosHash)
@@ -15,44 +15,34 @@ class Block():
         self.hash=self.setBlockHash()
 
 
-        
+    def __repr__(self):
+        return str(self)+"\n"       
     
     def getBlockTransactions(self):
         return  self.__transactions
 
     def setBlockHash(self):
-        return hash(self)
+        return Hash(self)
     
-    def addTransaction(self,transaction,scroogePk):
-        #check if it is instance of transaction first
-        #check signature
-        if(isinstance(transaction, Transaction) and len(self.__transactions)<10 and transaction.isValid(scroogePk)):
-            self.__transactions.append(transaction)
+    def addTransactions(self,transactions):
+        if(all(isinstance(t, Transaction) for t in transactions )):
+            self.__transactions=transactions
             return True
         else:
             return False    
 
     def __str__(self):
         ##LOOP on transactions and put them in a string then append them
-        return 'BlockId: '+str(self.__id)+", TransList: "+str(self.__transactions)
-
-class HashPointer():
-    def __init__(self,pointer,previosHash):
-        self.pointer=pointer
-        self.previosHash=previosHash
+        return 'BlockId: '+str(self.__id)+",\n TransList: "+str(self.__transactions)+"\n"+"BlockHash: "+str(self.hash)+"\n BlockHashPointer: "+str(self.hashPointer)+"\n"
     
-# x=Block()
-# c=ScroogeCoin(1)
-# c1=ScroogeCoin(1)
-# c.Sign(scrooge.scroogeSign(str(c)))
-# c1.Sign(scrooge.scroogeSign(str(c1)))
+    def isValid(self,scroogePk):
+        return (Hash(self) == self.hash) and (Hash(pointer)==self.hashPointer.previosHash) 
 
-# t=coinCreation(c)
-# t.Sign(scrooge.scroogeSign(str(t)))
-# t1=coinCreation(c1)
-# x.addTransaction(t)
-# x.addTransaction(t1)
+   
 
-# print(x)
+
+ 
+
+    
 
 

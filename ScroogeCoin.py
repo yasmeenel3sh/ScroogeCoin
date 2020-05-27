@@ -10,7 +10,6 @@ class ScroogeCoin():
         self.__id=ScroogeCoin.__id
         ScroogeCoin.__id+=1
         self.__value=value
-        self.__ownerID=ownerID
         self.__signature=None
 
 
@@ -18,7 +17,7 @@ class ScroogeCoin():
         return self.__owner
 
     def __str__(self):
-        return "CoinID: "+str(self.__id)+ ", Value: "+str(self.__value)+ ", OwnerID: "+str(self.__ownerID)
+        return "CoinID: "+str(self.__id)+ ", Value: "+str(self.__value)
             
     
     def __repr__(self):

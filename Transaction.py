@@ -1,7 +1,7 @@
 from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
 from ScroogeCoin import ScroogeCoin
-
+from Hash import HashPointer
 class Transaction():
     __id=0
 
@@ -11,6 +11,7 @@ class Transaction():
         self.__id=Transaction.__id
         self.__signature= None
         Transaction.__id+=1
+        self.__hashPointer=None
         
    
 
@@ -71,8 +72,9 @@ class Payment(Transaction):
         return Ecdsa.verify(str(self),self.getSignature(), senderPk)
         
     def __str__(self):
-        return "{TransType: Payment, TransID: "+str(self.getTranID())+" ,SenderID: "+str(self.__senderID)+" ,ReceiverID: "
-        +str(self.__receiverID)+", "+str(len(self.__coins))+"Coins: "+ self.coins +"}\n"   
+        senderID ="Scrooge" if self.__senderID==0 else str(self.__senderID)
+        return "{TransType: Payment, TransID: "+str(self.getTranID())+" ,SenderID: "+senderID+" ,ReceiverID: "+\
+        str(self.__receiverID)+", "+str(len(self.__coins))+"Coins: "+ str(self.__coins) +"}\n"   
     
     def getSenderID(self):
         return self.__senderID
