@@ -11,17 +11,24 @@ class ScroogeCoin():
         ScroogeCoin.__id+=1
         self.__value=value
         self.__signature=None
+        self.__lastRef=None
 
-
+ 
     def getCoinOwner(self):
         return self.__owner
+
+    def setLastRef(self,ref):
+        self.__lastRef=id(ref)   
+
+    def getLastRef(self):
+        return self.__lastRef     
 
     def __str__(self):
         return "CoinID: "+str(self.__id)+ ", Value: "+str(self.__value)
             
     
     def __repr__(self):
-        return str(self)   
+        return str(self)+"\n"   
     
     def Sign(self,signature):
         self.__signature= signature

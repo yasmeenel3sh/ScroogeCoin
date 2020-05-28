@@ -2,6 +2,7 @@ from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
 from Transaction import Payment
 from random import randint
+
 class User():
     __id=1
     def __init__(self):
@@ -30,15 +31,15 @@ class User():
         return paymentCreation
 
 
-    def getCoins(blockChain):
+    def getCoins(self,blockChain):
         coins = []
-        for block in blockchain.blocks:           
+        for block in blockChain:           
             transactions=block.getBlockTransactions()
             for t in transactions:
                 if(isinstance(t,Payment)):
                     if(t.getSenderID()==self.__id):
                         for coin in t.getCoins():
                             coins.remove(coin)
-                    if(t.getReceiverID()==self._id):
+                    if(t.getReceiverID()==self.__id):
                         coins=coins+t.getCoins()
         return coins                    

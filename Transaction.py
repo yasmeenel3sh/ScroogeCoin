@@ -11,7 +11,7 @@ class Transaction():
         self.__id=Transaction.__id
         self.__signature= None
         Transaction.__id+=1
-        self.__hashPointer=None
+        self.__hashPointers=[]
         
    
 
@@ -26,7 +26,12 @@ class Transaction():
     
     def getSignature(self):
         return self.__signature
+    
+    def addHashPointer(self,hashPointer):
+        self.__hashPointers.append(hashPointer)    
      
+    def getHashPointers(self):
+        return self.__hashPointers 
 
 
 class coinCreation(Transaction):
@@ -42,7 +47,7 @@ class coinCreation(Transaction):
              raise Exception("Coin must be an instace of ScroogeCoin and Should be signed by Scrooge")
 
     def __str__(self):
-        return "{TransType: CoinCreation, TransID: "+str(self.getTranID())+", "+ str(self.getCoin())+"}\n"
+        return "{TransType: CoinCreation, TransID: "+str(self.getTranID())+", "+" MemoryID: "+str(id(self))+", "+ str(self.getCoin())+", TransactionPointers:"+str(self.getHashPointers())+"}\n"
 
     def isValid(self,scroogePk):
         if(self.getSignature() == None):
@@ -52,6 +57,9 @@ class coinCreation(Transaction):
     
     def getCoin(self):
         return self.__coin
+
+    def addTransactionHashPointer(pointer):
+        self.__hashPointers.append(pointer)    
 
 class Payment(Transaction):
 
@@ -70,11 +78,11 @@ class Payment(Transaction):
             if(coin not in senderCoins):
                 return False
         return Ecdsa.verify(str(self),self.getSignature(), senderPk)
-        
+            
     def __str__(self):
         senderID ="Scrooge" if self.__senderID==0 else str(self.__senderID)
-        return "{TransType: Payment, TransID: "+str(self.getTranID())+" ,SenderID: "+senderID+" ,ReceiverID: "+\
-        str(self.__receiverID)+", "+str(len(self.__coins))+"Coins: "+ str(self.__coins) +"}\n"   
+        return "{TransType: Payment, TransID: "+str(self.getTranID())+" MemoryID: "+str(id(self)) + " ,SenderID: "+senderID+" ,ReceiverID: "+\
+        str(self.__receiverID)+", Amount: "+str(len(self.__coins))+" Coins: \n"+ str(self.__coins) +", TransactionPointers: "+str(self.getHashPointers())+"}\n"
     
     def getSenderID(self):
         return self.__senderID

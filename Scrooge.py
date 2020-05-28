@@ -13,8 +13,8 @@ class Scrooge():
     __coins=[]
     __blockChain=[]
 
-    __previousHashPointer=None
-    lastHashPointer=None
+    __previousHashPointer=HashPointer(None,None)
+    lastHashPointer=HashPointer(None,None)
     def __init__(self):
         self.__coins=[]
         self.__sk= PrivateKey()
@@ -29,7 +29,10 @@ class Scrooge():
 
     def getScroogeID(self):
         return self.__id
-
+     
+    def getBlockChain(self):
+        return self.__blockChain
+    
     ##make it private
     def scroogeSign(self,msg):
         return Ecdsa.sign(msg, self.__sk)
@@ -76,10 +79,14 @@ class Scrooge():
         senderID=transaction.getSenderID()
         #initialization by scrooge
         if(senderID==0):
-            return True
+            return true
         sender=self.getUserByID(senderID)
         senderPk=sender.getUserPk()
         firstCheck=transaction.isValid(sender.getCoins(self.__blockChain),senderPk)
+        if(not firstCheck):
+            print("Transaction Coins don't belong to sender")
+            return false
+
         if(firstCheck):
             #checking in buffer
             for t in self.__buffer:
@@ -88,21 +95,26 @@ class Scrooge():
                         tCions=t.getCoins()
                         for coin in tCions:
                             if(coin in transaction.getCoins()):
+                                print("Double Spending Rejected: \n"+str(transaction))
                                 return false
             return true                     
         else:
             return false    
-
-
-
+        
     def addTransactionToBuffer(self,transaction):
 
         if(len(self.__buffer)<10):
             if(isinstance(transaction,coinCreation)):
                 if(transaction.isValid(self.__pk)):
                     self.__buffer.append(transaction)
+                    transaction.addHashPointer(None)
+                    transaction.getCoin().setLastRef(transaction)
             elif(isinstance(transaction,Payment)):
                 if(self.Verify(transaction)):
+                    coins=transaction.getCoins()
+                    for coin in coins:
+                        transaction.addHashPointer(coin.getLastRef())
+                        coin.setLastRef(transaction)                       
                     self.__buffer.append(transaction)
                 else:
                     print("Transaction discarded")            
@@ -121,20 +133,18 @@ class Scrooge():
             block=Block(None,None)
         else:
             block=Block(self.__previousHashPointer.pointer,self.__previousHashPointer.previousHash) 
-
+        
         block.addTransactions(buffer)
+        block.setBlockHash()
         self.lastHashPointer=HashPointer(block,Hash(block)) 
         #signing
         self.lastHashPointer.Sign(self.scroogeSign(str(self.lastHashPointer)))
         self.__blockChain.append(block)  
         
     def printBlockChain(self):
-        print(len(self.__blockChain))
         print(self.__blockChain)
         print("Block under construction\n")
         print(self.__buffer)
 
 
 
-
-scrooge =Scrooge()
