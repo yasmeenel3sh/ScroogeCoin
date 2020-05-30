@@ -1,9 +1,9 @@
 # ScroogeCoin
 Libraries needed:
 
-pip install starkbank-ecdsa
-pip install pynput
-pip install hashlib #Notice that in python3 it is defaultly installed so this might give an error
+pip install starkbank-ecdsa <br />
+pip install pynput<br />
+pip install hashlib #Notice that in python3 it is defaultly installed so this might give an error<br />
 
 
 Run the Main.py file
