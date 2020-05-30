@@ -2,6 +2,8 @@ from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
 from ScroogeCoin import ScroogeCoin
 from Hash import HashPointer
+
+
 class Transaction():
     __id=0
 
@@ -47,7 +49,7 @@ class coinCreation(Transaction):
              raise Exception("Coin must be an instace of ScroogeCoin and Should be signed by Scrooge")
 
     def __str__(self):
-        return "{TransType: CoinCreation, TransID: "+str(self.getTranID())+", "+" MemoryID: "+str(id(self))+", "+ str(self.getCoin())+", TransactionPointers:"+str(self.getHashPointers())+"}\n"
+        return "{TransType: CoinCreation\n, TransID: "+str(self.getTranID())+"\n, "+" MemoryID: "+str(id(self))+"\n, Coin:"+ str(self.getCoin())+", TransactionPointers:"+str(self.getHashPointers())+"}\n"
 
     def isValid(self,scroogePk):
         if(self.getSignature() == None):
@@ -78,11 +80,22 @@ class Payment(Transaction):
             if(coin not in senderCoins):
                 return False
         return Ecdsa.verify(str(self),self.getSignature(), senderPk)
+
+    def __repr__(self):
+        coins=[]
+        for coin in self.__coins:
+            coins.append(coin.getCoinID())
+        senderID ="Scrooge" if self.__senderID==0 else str(self.__senderID)
+        return "{TransType: Payment \n TransID: "+str(self.getTranID())+"\n MemoryID: "+str(id(self)) + "\n SenderID: "+senderID+"\n ReceiverID: "+\
+        str(self.__receiverID)+"\n Amount: "+str(len(self.__coins))+"\n Coins: "+ str(coins) +"\n TransactionPointers: "+str(self.getHashPointers())+"}\n"
             
     def __str__(self):
+        coins=[]
+        for coin in self.__coins:
+            coins.append(coin.getCoinID())
         senderID ="Scrooge" if self.__senderID==0 else str(self.__senderID)
-        return "{TransType: Payment, TransID: "+str(self.getTranID())+" MemoryID: "+str(id(self)) + " ,SenderID: "+senderID+" ,ReceiverID: "+\
-        str(self.__receiverID)+", Amount: "+str(len(self.__coins))+" Coins: \n"+ str(self.__coins) +", TransactionPointers: "+str(self.getHashPointers())+"}\n"
+        return "{TransType: Payment, TransID: "+str(self.getTranID()) + " ,SenderID: "+senderID+" ,ReceiverID: "+\
+        str(self.__receiverID)+", Amount: "+str(len(self.__coins))+" Coins: "+ str(coins)+"}\n"
     
     def getSenderID(self):
         return self.__senderID
@@ -93,17 +106,11 @@ class Payment(Transaction):
     def getCoins(self):
         return self.__coins    
 
-# # Generate new Keys
-# privateKey = PrivateKey()
-# publicKey = privateKey.publicKey()
-# p2= PrivateKey()
-# pk2=p2.publicKey()
 
-# message = "My test message"
+class DiscardedTransaction():
+    def __init__(self,transaction,reason):
+        self.__transaction=transaction
+        self.__reason=reason
 
-# # Generate Signature
-# signature = Ecdsa.sign(message, privateKey)
-
-# # To verify if the signature is valid
-# print(Ecdsa.verify(message, signature, pk2))
-# print("hi")
+    def __repr__(self):
+        return str(self.__transaction)+" Reason: "+self.__reason+"\n"

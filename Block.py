@@ -13,10 +13,10 @@ class Block():
         self.__id=Block.__id
         Block.__id+=1
         self.hash=None
-
+        
 
     def __repr__(self):
-        return 'BlockId: '+str(self.__id)+", MemoryID: "+str(id(self))+",\n TransList:\n "+str(self.__transactions)+"\n"+"BlockHash: "+str(self.hash)+"\n BlockHashPointer: "+str(self.hashPointer)+"\n"       
+        return 'BlockId: '+str(self.__id)+"\n, MemoryID: "+str(id(self))+"\nBlockHash: "+str(self.hash)+"\n BlockHashPointer: "+str(self.hashPointer)+"\n"     
     
     def getBlockTransactions(self):
         return  self.__transactions
@@ -39,7 +39,8 @@ class Block():
         return (Hash(self) == self.hash) and (Hash(pointer)==self.hashPointer.previosHash) 
 
    
-
+        # return 'BlockId: '+str(self.__id)+"\n, MemoryID: "+str(id(self))+",\n TransList:\n "+repr(self.__transactions)+"\n"+"BlockHash: "+str(self.hash)+"\n BlockHashPointer: "+str(self.hashPointer)+"\n"\
+        # +"Transactions that were discarded while creating this block: \n"+repr(self.__discardedTransactions)+"\n
 
  
 

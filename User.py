@@ -19,17 +19,43 @@ class User():
     def getUserID(self):
         return self.__id    
 
-    def createPayment(self,receiverID):
-        coins=getCoins()
-        amount=randint(1,len(coins)-1)
+    def createPayment(self,receiverID,blockChain):
+        coins=self.getCoins(blockChain)
+        if(len(coins)==0):
+            return None
+        if(len(coins)==1):
+            amount=1
+        elif(len(coins)>1):    
+            amount=randint(1,len(coins)-1)
         coinsToSend=[]
         for i in range(0,amount):
             index=randint(0,len(coins)-1)
             coinsToSend.append(coins.pop(index))
         paymentCreation=Payment(coinsToSend,self.__id,receiverID)
-        paymentCreation.Sign(self.__sk)
+        paymentCreation.Sign(Ecdsa.sign(str(paymentCreation), self.__sk))
         return paymentCreation
 
+    def createPaymentTest(self,receiverID,blockChain):
+        coins=self.getCoins(blockChain)
+        if(len(coins)==0):
+            return None
+        amount=1
+        coinsToSend=[]
+        for i in range(0,amount):
+            index=randint(0,len(coins)-1)
+            coinsToSend.append(coins.pop(index))
+        paymentCreation=Payment(coinsToSend,self.__id,receiverID)
+        paymentCreation.Sign(Ecdsa.sign(str(paymentCreation), self.__sk))
+        return paymentCreation
+
+    def createPaymentTestDoubleSpend(self,receiverID,blockChain):
+        coins=self.getCoins(blockChain)
+        amount=1
+        coinsToSend=[]
+        coinsToSend.append(coins.pop(0))
+        paymentCreation=Payment(coinsToSend,self.__id,receiverID)
+        paymentCreation.Sign(Ecdsa.sign(str(paymentCreation), self.__sk))
+        return paymentCreation
 
     def getCoins(self,blockChain):
         coins = []
@@ -42,4 +68,6 @@ class User():
                             coins.remove(coin)
                     if(t.getReceiverID()==self.__id):
                         coins=coins+t.getCoins()
-        return coins                    
+        return coins
+
+                     

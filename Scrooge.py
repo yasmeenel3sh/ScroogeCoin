@@ -1,17 +1,22 @@
 from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
 from ScroogeCoin import ScroogeCoin
-from Transaction import coinCreation, Payment
+from Transaction import coinCreation, Payment, DiscardedTransaction
 from Block import Block
 from User import User
 from Hash import Hash, HashPointer
+
+import binascii
 class Scrooge():
     __id=0
     __Name="Scrooge"
     __users=[]
     __buffer=[]
+
     __coins=[]
     __blockChain=[]
+    initialization=True
+    text_file = open("Output.txt", "w")
 
     __previousHashPointer=HashPointer(None,None)
     lastHashPointer=HashPointer(None,None)
@@ -23,6 +28,7 @@ class Scrooge():
         if(Scrooge.__id != 0):
              raise Exception("Only one Scrooge Entity should be created")
         Scrooge.__id+=1
+        
 
     def getScroogePk(self):
         return self.__pk
@@ -48,9 +54,30 @@ class Scrooge():
             if(user.getUserID()==userID):
                 return user
 
+    def finishInitialization(self):
+        print("Initialization Finished\n")
+        print("AdminID: Scrooge\n AdminPublic key: "+str(binascii.hexlify(self.__pk.toString().encode('utf8')))+"\n")
+        print("*******************************************************************************\n")
+        print("Current Users\n")
 
-    def printBuffer(self):
-        print(self.__buffer)
+        self.text_file.write("Initialization Finished\n")
+        self.text_file.write("AdminID: Scrooge\n AdminPublic key: "+str(binascii.hexlify(self.__pk.toString().encode('utf8')))+"\n")
+        self.text_file.write("************************************************************************************************************\n")
+        self.text_file.write("Current Users\n")
+
+        for user in self.__users:
+            print("UserID: "+str(user.getUserID())+"\n UserPublicKey: "+str(binascii.hexlify(user.getUserPk().toString().encode('utf8')))+"\n Coins: "+repr(user.getCoins(self.__blockChain)))
+            print("*******************************************************************************\n")
+            self.text_file.write("UserID: "+str(user.getUserID())+"\n UserPublicKey: "+str(binascii.hexlify(user.getUserPk().toString().encode('utf8')))+"\n Coins: "+repr(user.getCoins(self.__blockChain))+"\n")
+            self.text_file.write("************************************************************************************************************\n")
+        print("##########################Blockchain After initialization#######################\n")
+        print(repr(self.__blockChain)+"\n")
+        print("__________________________________________________________________________\n")
+        self.text_file.write("##########################Blockchain After initialization#######################\n")
+        self.text_file.write(repr(self.__blockChain)+"\n")
+        self.text_file.write("__________________________________________________________________________\n")    
+        self.initialization=False
+    
 
     def createCoin(self):
         coin=ScroogeCoin(1,self.__id)
@@ -72,52 +99,90 @@ class Scrooge():
         if(len(coinsToSend)>0):
             paymentCreation=Payment(coinsToSend,self.__id,receiverID)
             paymentCreation.Sign(self.__sk) 
-            print(paymentCreation.getReceiverID())
             self.addTransactionToBuffer(paymentCreation)   
 
     def Verify(self,transaction):
         senderID=transaction.getSenderID()
         #initialization by scrooge
         if(senderID==0):
-            return true
+            return True
         sender=self.getUserByID(senderID)
         senderPk=sender.getUserPk()
+        #checking the coins belong to the owner
         firstCheck=transaction.isValid(sender.getCoins(self.__blockChain),senderPk)
         if(not firstCheck):
             print("Transaction Coins don't belong to sender")
-            return false
+            discardedTransaction=DiscardedTransaction(transaction,"Transaction Coins don't belong to sender")
+            print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n")
+            print("Transaction discarded\n")
+            print(discardedTransaction)
+            print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n") 
 
-        if(firstCheck):
-            #checking in buffer
-            for t in self.__buffer:
-                if(isinstance(t,Payment)):
-                    if(t.getSenderID==senderID):
-                        tCions=t.getCoins()
-                        for coin in tCions:
-                            if(coin in transaction.getCoins()):
-                                print("Double Spending Rejected: \n"+str(transaction))
-                                return false
-            return true                     
-        else:
-            return false    
+            self.text_file.write("Transaction Coins don't belong to sender")
+            self.text_file.write("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n")
+            self.text_file.write("Transaction discarded\n")
+            self.text_file.write(str(discardedTransaction))
+            self.text_file.write("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n") 
+            return False
+
         
-    def addTransactionToBuffer(self,transaction):
+        #checking in buffer
+        for t in self.__buffer:
+            if(isinstance(t,Payment)):
+                if(t.getSenderID()==senderID):
+                    tCions=t.getCoins()
+                    for coin in tCions:
+                        if(coin in transaction.getCoins()):
+                            discardedTransaction=DiscardedTransaction(transaction,"Double Spending")
+                            print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n")
+                            print("Transaction discarded\n")
+                            print(discardedTransaction)
+                            print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n") 
+                            self.text_file.write("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n")
+                            self.text_file.write("Transaction discarded\n")
+                            self.text_file.write(str(discardedTransaction))
+                            self.text_file.write("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n") 
+                            return False
+        return True                    
 
+    def addTransactionToBuffer(self,transaction):
+        if(transaction==None):
+            return   
         if(len(self.__buffer)<10):
             if(isinstance(transaction,coinCreation)):
                 if(transaction.isValid(self.__pk)):
                     self.__buffer.append(transaction)
                     transaction.addHashPointer(None)
+                    transaction.getCoin().setCreatedAt(transaction)
                     transaction.getCoin().setLastRef(transaction)
             elif(isinstance(transaction,Payment)):
+                if(self.initialization==False):
+                    print("***********************Processing Transaction***********************\n")
+                    self.text_file.write("***********************Processing Transaction***********************\n")
                 if(self.Verify(transaction)):
                     coins=transaction.getCoins()
                     for coin in coins:
                         transaction.addHashPointer(coin.getLastRef())
                         coin.setLastRef(transaction)                       
                     self.__buffer.append(transaction)
-                else:
-                    print("Transaction discarded")            
+                    if(self.initialization==False):
+                        print(repr(transaction))
+                        print("Transaction Added Successfully \n")
+                        print("**********************************************************************\n")
+                        print("###############################Current Block Under Construction######################################### \n")
+                        self.text_file.write(repr(transaction))
+                        self.text_file.write("Transaction Added Successfully \n")
+                        self.text_file.write("**********************************************************************\n")
+                        self.text_file.write("###############################Current Block Under Construction######################################### \n")
+                        for t in self.__buffer:
+                            print("Transaction ID: "+str(t.getTranID())+"\n")
+                            print("Transaction MemoryID: "+str(id(t))+"\n")
+                            print("___________________________________________ \n")  
+                            self.text_file.write("Transaction ID: "+str(t.getTranID())+"\n")
+                            self.text_file.write("Transaction MemoryID: "+str(id(t))+"\n")
+                            self.text_file.write("___________________________________________ \n")                   
+                
+                               
         else:
             raise Exception("Buffer limit exceeded")
         if(len(self.__buffer)==10):
@@ -125,7 +190,20 @@ class Scrooge():
             self.createBlock(self.__buffer)
             
             self.__buffer=[]
-            print("Block added to Chain")            
+            if(self.initialization==False):
+                
+                print("Block added to Chain\n")
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+                print("Current Blockchain\n")
+                self.text_file.write("Block added to Chain\n")
+                self.text_file.write("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+                self.text_file.write("Current Blockchain\n")
+                print(repr(self.__blockChain)+"\n")
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+                self.text_file.write(repr(self.__blockChain)+"\n")
+                self.text_file.write("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")  
+
+              
 
     def createBlock(self,buffer):
         self.__previousHashPointer=self.lastHashPointer
@@ -142,9 +220,10 @@ class Scrooge():
         self.__blockChain.append(block)  
         
     def printBlockChain(self):
-        print(self.__blockChain)
-        print("Block under construction\n")
-        print(self.__buffer)
+        # print(self.__blockChain)
+        # print(colored("Block under construction\n","green"))
+        # print(colored(self.__buffer,"green"))
 
+        self.text_file.close()
 
 
